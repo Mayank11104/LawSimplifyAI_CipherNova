@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+<link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Orbitron:wght@400;700&amp;family=Roboto+Mono&amp;display=swap" onload="this.rel='stylesheet'" rel="stylesheet"/>
+<title>LegalEase AI - Understand Legal Documents in Plain Language</title>
+<link href="data:image/x-icon;base64," rel="icon" type="image/x-icon"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<style type="text/tailwindcss">
+        :root {
+            --primary-color: #00A9E6;
+            --secondary-color: #003366;
+            --accent-color: #00F5D4;
+            --text-color: #E0E0E0;
+            --background-light: #0A192F;
+            --background-dark: #020C1B;
+        }
+        body {
+            background-color: var(--background-dark);
+            color: var(--text-color);
+            font-family: 'Inter', 'Noto Sans', sans-serif;
+        }
+        .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .font-roboto-mono {
+            font-family: 'Roboto Mono', monospace;
+        }
+        .glass-effect {
+            background: rgba(10, 25, 47, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 169, 230, 0.2);
+        }
+        .glow-effect {
+            box-shadow: 0 0 15px rgba(0, 169, 230, 0.3), 0 0 30px rgba(0, 169, 230, 0.2), 0 0 45px rgba(0, 169, 230, 0.1);
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 44px;
+            bottom: -16px;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary-color), var(--accent-color));
+            opacity: 0.3;
+            z-index: 0;
+        }
+        .timeline-item:last-child::before {
+            display: none;
+        }
+        .hero-bg {
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(0, 169, 230, 0.1) 0%, transparent 30%),
+                radial-gradient(circle at 80% 90%, rgba(0, 245, 212, 0.1) 0%, transparent 30%);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-text-color">
+<div class="relative flex size-full min-h-screen flex-col overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<header class="sticky top-0 z-50 glass-effect">
+<div class="container mx-auto flex items-center justify-between whitespace-nowrap px-6 py-4 lg:px-10">
+<div class="flex items-center gap-3">
+<svg class="text-primary h-8 w-8" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+<h2 class="text-text-color text-2xl font-bold tracking-tight font-orbitron">LegalEase AI</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-text-color hover:text-primary text-base font-medium transition-colors" href="#">Features</a>
+<a class="text-text-color hover:text-primary text-base font-medium transition-colors" href="#">How It Works</a>
+<a class="text-text-color hover:text-primary text-base font-medium transition-colors" href="#">Testimonials</a>
+</nav>
+<div class="flex items-center gap-3">
+<button class="flex min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-5 bg-primary text-background-dark text-base font-bold leading-normal tracking-wide shadow-[0_0_15px_rgba(0,169,230,0.5)] transition-all hover:bg-accent hover:text-background-dark focus:outline-none focus:ring-4 focus:ring-primary/50">
+<span class="truncate">Try it Now</span>
+</button>
+<button class="hidden md:flex min-w-[100px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-11 px-5 bg-text-color/10 border border-text-color/20 text-text-color text-base font-bold leading-normal tracking-wide transition-all hover:bg-text-color/20 focus:outline-none focus:ring-4 focus:ring-slate-300/50">
+<span class="truncate">Learn More</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1">
+<section class="py-20 md:py-32 hero-bg">
+<div class="container mx-auto px-6 lg:px-10 grid md:grid-cols-2 gap-12 items-center">
+<div class="flex flex-col gap-6 text-left">
+<h1 class="text-text-color text-4xl md:text-5xl lg:text-6xl font-black leading-tight tracking-tighter font-orbitron">
+                                Understand Legal Documents in Plain Language
+                            </h1>
+<p class="text-slate-400 text-lg md:text-xl leading-relaxed">
+                                LegalEase AI simplifies complex legal documents into easy-to-understand language, empowering you to make informed decisions with confidence.
+                            </p>
+<div class="mt-4 flex flex-col sm:flex-row gap-4">
+<button class="flex min-w-[150px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 px-8 bg-primary text-background-dark text-lg font-bold leading-normal tracking-wide shadow-[0_0_20px_rgba(0,169,230,0.6)] transition-all hover:bg-accent hover:text-background-dark focus:outline-none focus:ring-4 focus:ring-primary/50">
+<span class="truncate">Try it Now for Free</span>
+</button>
+<button class="flex min-w-[150px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 px-8 bg-text-color/10 border border-text-color/20 text-text-color text-lg font-bold leading-normal tracking-wide transition-all hover:bg-text-color/20 focus:outline-none focus:ring-4 focus:ring-slate-300/50">
+<span class="truncate">Learn More</span>
+</button>
+</div>
+</div>
+<div class="relative">
+<div class="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-20 rounded-full blur-3xl"></div>
+<div class="relative w-full aspect-square bg-center bg-no-repeat bg-contain rounded-lg" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD2jqnn-6Z0uhNO_jxJNf-NoCPU--szIfWtt5oA8XvkVS149pKNc0cZTswUCCLZCOMZqEmKKYkVKratWAQmfMEtqExDJRVwmwzETCVNvO-eHLIMqrD4XMirXmT1HbkGeKEa7NHnEQ4a4_pAb2yS-V0lRVojIIbMT6u2ujShl03IuZNud9WbjvNSkoeRf0kF3LYrD-Ckjupav4wCg0h7vhJX94SWB8NoZfZr36t7C0pZuCcNWsAgoADYEU37i-y8dqC9cgrDZ-6iN-dq");'></div>
+</div>
+</div>
+</section>
+<section class="py-20 md:py-28 bg-background-light" id="features">
+<div class="container mx-auto px-6 lg:px-10">
+<div class="text-center max-w-3xl mx-auto mb-16">
+<h2 class="text-text-color text-3xl md:text-4xl font-black leading-tight tracking-tighter font-orbitron">
+                                Powerful Features to Demystify Legal Jargon
+                            </h2>
+<p class="text-slate-400 text-lg md:text-xl mt-4">
+                                LegalEase AI offers a suite of tools designed to bring clarity and confidence to your legal document reviews.
+                            </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="glass-effect p-6 rounded-xl hover:border-primary/50 transition-all duration-300 flex flex-col items-start text-left">
+<div class="bg-primary/10 p-3 rounded-lg mb-4">
+<svg class="text-primary" fill="currentColor" height="32" viewBox="0 0 256 256" width="32" xmlns="http://www.w3.org/2000/svg">
+<path d="M213.66,82.34l-56-56A8,8,0,0,0,152,24H56A16,16,0,0,0,40,40V216a16,16,0,0,0,16,16H200a16,16,0,0,0,16-16V88A8,8,0,0,0,213.66,82.34ZM160,51.31,188.69,80H160ZM200,216H56V40h88V88a8,8,0,0,0,8,8h48V216Z"></path>
+</svg>
+</div>
+<h3 class="text-text-color text-xl font-bold mb-2">Upload &amp; Summarize</h3>
+<p class="text-slate-400">Quickly upload contracts and get a concise summary of key terms and obligations.</p>
+</div>
+<div class="glass-effect p-6 rounded-xl hover:border-accent/50 transition-all duration-300 flex flex-col items-start text-left">
+<div class="bg-accent/10 p-3 rounded-lg mb-4">
+<svg class="text-accent" fill="currentColor" height="32" viewBox="0 0 256 256" width="32" xmlns="http://www.w3.org/2000/svg">
+<path d="M224,48H32a8,8,0,0,0-8,8V192a8,8,0,0,0,8,8H224a8,8,0,0,0,8-8V56A8,8,0,0,0,224,48ZM95.42,168,40,128.32,51.68,112,94.23,143.2l111.82-80L216,77.56Z"></path>
+</svg>
+</div>
+<h3 class="text-text-color text-xl font-bold mb-2">Clause-by-Clause Explanation</h3>
+<p class="text-slate-400">Get a detailed breakdown of each clause, explaining its meaning and implications.</p>
+</div>
+<div class="glass-effect p-6 rounded-xl hover:border-primary/50 transition-all duration-300 flex flex-col items-start text-left">
+<div class="bg-primary/10 p-3 rounded-lg mb-4">
+<svg class="text-primary" fill="currentColor" height="32" viewBox="0 0 256 256" width="32" xmlns="http://www.w3.org/2000/svg">
+<path d="M140,180a12,12,0,1,1-12-12A12,12,0,0,1,140,180ZM128,72c-22.06,0-40,16.15-40,36v4a8,8,0,0,0,16,0v-4c0-11,10.77-20,24-20s24,9,24,20-10.77,20-24,20a8,8,0,0,0-8,8v8a8,8,0,0,0,16,0v-.72c18.24-3.35,32-17.9,32-35.28C168,88.15,150.06,72,128,72Zm104,56A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"></path>
+</svg>
+</div>
+<h3 class="text-text-color text-xl font-bold mb-2">Ask Questions in English</h3>
+<p class="text-slate-400">Ask specific questions about the document and receive clear, AI-powered answers.</p>
+</div>
+<div class="glass-effect p-6 rounded-xl hover:border-accent/50 transition-all duration-300 flex flex-col items-start text-left">
+<div class="bg-accent/10 p-3 rounded-lg mb-4">
+<svg class="text-accent" fill="currentColor" height="32" viewBox="0 0 256 256" width="32" xmlns="http://www.w3.org/2000/svg">
+<path d="M208,40H48A16,16,0,0,0,32,56v58.77c0,89.61,75.82,119.34,91,124.39a15.53,15.53,0,0,0,10,0c15.2-5.05,91-34.78,91-124.39V56A16,16,0,0,0,208,40Zm0,74.79c0,78.42-66.35,104.62-80,109.18-13.53-4.51-80-30.69-80-109.18V56l160,0Z"></path>
+</svg>
+</div>
+<h3 class="text-text-color text-xl font-bold mb-2">Private &amp; Secure</h3>
+<p class="text-slate-400">Your documents are protected in our secure AI environment, ensuring confidentiality.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-20 md:py-28" id="how-it-works">
+<div class="container mx-auto px-6 lg:px-10">
+<div class="text-center max-w-3xl mx-auto mb-16">
+<h2 class="text-text-color text-3xl md:text-4xl font-black leading-tight tracking-tighter font-orbitron">How It Works in 3 Simple Steps</h2>
+<p class="text-slate-400 text-lg md:text-xl mt-4">
+                                Get from complex legal document to clear understanding in minutes.
+                            </p>
+</div>
+<div class="relative max-w-2xl mx-auto">
+<div class="timeline-item relative pl-12 pb-12">
+<div class="absolute left-0 top-0 flex items-center justify-center size-10 rounded-full bg-primary text-background-dark font-bold text-lg z-10 glow-effect font-roboto-mono">1</div>
+<div class="pl-4">
+<h3 class="text-text-color text-xl font-bold mb-2">Upload Your Document</h3>
+<p class="text-slate-400">Securely upload your legal document in formats like PDF, DOCX, or plain text.</p>
+</div>
+</div>
+<div class="timeline-item relative pl-12 pb-12">
+<div class="absolute left-0 top-0 flex items-center justify-center size-10 rounded-full bg-primary text-background-dark font-bold text-lg z-10 glow-effect font-roboto-mono">2</div>
+<div class="pl-4">
+<h3 class="text-text-color text-xl font-bold mb-2">AI Simplification</h3>
+<p class="text-slate-400">Our advanced AI analyzes your document, breaking down complex clauses into plain, easy-to-understand language.</p>
+</div>
+</div>
+<div class="timeline-item relative pl-12">
+<div class="absolute left-0 top-0 flex items-center justify-center size-10 rounded-full bg-primary text-background-dark font-bold text-lg z-10 glow-effect font-roboto-mono">3</div>
+<div class="pl-4">
+<h3 class="text-text-color text-xl font-bold mb-2">Get Instant Insights</h3>
+<p class="text-slate-400">Receive a clear summary, clause-by-clause explanations, and the ability to ask questions to clarify any point.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="py-20 md:py-28 bg-background-light" id="testimonials">
+<div class="container mx-auto px-6 lg:px-10">
+<div class="text-center max-w-3xl mx-auto mb-16">
+<h2 class="text-text-color text-3xl md:text-4xl font-black leading-tight tracking-tighter font-orbitron">Trusted by Professionals</h2>
+<p class="text-slate-400 text-lg md:text-xl mt-4">
+                                See what our users are saying about how LegalEase AI transformed their workflow.
+                            </p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<div class="glass-effect p-8 rounded-xl">
+<div class="flex items-center mb-4">
+<img alt="Avatar of Sarah L." class="w-14 h-14 rounded-full mr-4 border-2 border-primary/50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBViykvDKrij_6y6GOE_wC9FyWpr7hbiPt55Rklz0eP-5mQX-Zq9KlR1QNxdG1cCGFcdvVnw-w0cYrUdbaumWshui7EbSt9bOf3ys-BteWSqx49kK94Y_uzNhKbtEHVc7-96uS5B0Yldn7wS1w-RfULprkGYK7Xw1QrqL07qdLao_g-8aR2rwepyrkH5TZtiNvjgkvnU4Hoopw_8Ysbp10So7DC676wdZZdOm_IMj_fvZj5j0FLBF4IpQDQv8NmyowDzm9n8PfOPMKG"/>
+<div>
+<p class="text-text-color font-bold">Sarah L.</p>
+<p class="text-slate-500 text-sm">Small Business Owner</p>
+</div>
+</div>
+<p class="text-slate-400">"LegalEase AI has been a game-changer for my business. I can now understand contracts without needing to hire a lawyer for every small detail."</p>
+</div>
+<div class="glass-effect p-8 rounded-xl">
+<div class="flex items-center mb-4">
+<img alt="Avatar of David Chen" class="w-14 h-14 rounded-full mr-4 border-2 border-primary/50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxyVG70zf4zSimx8O0qERevMK9y6nilqZWquJylYELarea45rV8-A-jkDFLQz1nTzoXWlRSxQlbgm9MbkcaoB-6kKmiuJTQpT60dn8cHVuFk7eN5Iq_moiwKH9JVc8HFQ7vNXuXF8MlnKsMy3gzr8OsnOK-zrIVRY1SmqDPFFJCKwAX1n6o-u8ILzbz1LB7-ffTzQo5yu5DY38DfbELz0-HCpocfqH0ZxXcycBeAN-uudfJ3-wizKlaY5EFX05FueN2VGrcATLlfrX"/>
+<div>
+<p class="text-text-color font-bold">David Chen</p>
+<p class="text-slate-500 text-sm">Freelance Developer</p>
+</div>
+</div>
+<p class="text-slate-400">"As a freelancer, I often deal with complex agreements. LegalEase AI helps me quickly grasp the key terms and protect my interests. Highly recommended!"</p>
+</div>
+<div class="glass-effect p-8 rounded-xl">
+<div class="flex items-center mb-4">
+<img alt="Avatar of Emily Rodriguez" class="w-14 h-14 rounded-full mr-4 border-2 border-primary/50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3W2iDMxOIZmjGlAcLE9qla2HJlQlFosI6QykWx3x8T1dPrTtYig2pjgV4_fWZvxCe0SL20vIFtMRXLjc9n3e2sUJHEA1r7GZSxfataB0uDAjvhi31E_oXoD6fhut2RA1VAqxKlZSVodMVAklXfXbBY1vSCNuzO8euwHqVcCfhODKLl9aFJw8ouOZvFLf4RM7DQbOFZ-Lu3_k5Z5xGH8Qzd9IaWD_Fo4HC9F8yCzDfWlJLNpUsJK3gnG2COAekI-Ey9crxk2Flgr5t"/>
+<div>
+<p class="text-text-color font-bold">Emily Rodriguez</p>
+<p class="text-slate-500 text-sm">Marketing Consultant</p>
+</div>
+</div>
+<p class="text-slate-400">"I used to dread reviewing legal documents. LegalEase AI makes it easy to understand my obligations and rights, saving me time and stress."</p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-20 md:py-32">
+<div class="container mx-auto px-6 lg:px-10">
+<div class="bg-primary/10 rounded-2xl p-10 md:p-16 text-center border border-primary/20">
+<h2 class="text-text-color text-3xl md:text-4xl font-black leading-tight tracking-tighter font-orbitron">Ready to Simplify Your Legal Documents?</h2>
+<p class="text-slate-400 text-lg md:text-xl mt-4 max-w-2xl mx-auto">
+                                Start your free trial today and experience the power of AI-driven legal clarity. No credit card required.
+                            </p>
+<div class="mt-8 flex justify-center">
+<button class="flex min-w-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-14 px-8 bg-primary text-background-dark text-lg font-bold leading-normal tracking-wide shadow-[0_0_20px_rgba(0,169,230,0.6)] transition-all hover:bg-accent hover:text-background-dark focus:outline-none focus:ring-4 focus:ring-primary/50">
+<span class="truncate">Get Started for Free</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-background-light border-t border-primary/20">
+<div class="container mx-auto px-6 lg:px-10 py-12">
+<div class="flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-3">
+<svg class="text-primary h-8 w-8" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path></svg>
+<h2 class="text-text-color text-2xl font-bold tracking-tight font-orbitron">LegalEase AI</h2>
+</div>
+<div class="flex items-center gap-6">
+<a class="text-slate-400 hover:text-primary text-base font-medium transition-colors" href="#">About</a>
+<a class="text-slate-400 hover:text-primary text-base font-medium transition-colors" href="#">Privacy Policy</a>
+<a class="text-slate-400 hover:text-primary text-base font-medium transition-colors" href="#">Contact Us</a>
+</div>
+<div class="flex items-center gap-5">
+<a class="text-slate-500 hover:text-primary transition-colors" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg"><path d="M247.39,68.94A8,8,0,0,0,240,64H209.57A48.66,48.66,0,0,0,168.1,40a46.91,46.91,0,0,0-33.75,13.7A47.9,47.9,0,0,0,120,88v6.09C79.74,83.47,46.81,50.72,46.46,50.37a8,8,0,0,0-13.65,4.92c-4.31,47.79,9.57,79.77,22,98.18a110.93,110.93,0,0,0,21.88,24.2c-15.23,17.53-39.21,26.74-39.47,26.84a8,8,0,0,0-3.85,11.93c.75,1.12,3.75,5.05,11.08,8.72C53.51,229.7,65.48,232,80,232c70.67,0,129.72-54.42,135.75-124.44l29.91-29.9A8,8,0,0,0,247.39,68.94Zm-45,29.41a8,8,0,0,0-2.32,5.14C196,166.58,143.28,216,80,216c-10.56,0-18-1.4-23.22-3.08,11.51-6.25,27.56-17,37.88-32.48A8,8,0,0,0,92,169.08c-.47-.27-43.91-26.34-44-96,16,13,45.25,33.17,78.67,38.79A8,8,0,0,0,136,104V88a32,32,0,0,1,9.6-22.92A30.94,30.94,0,0,1,167.9,56c12.66.16,24.49,7.88,29.44,19.21A8,8,0,0,0,204.67,80h16Z"></path></svg>
+</a>
+<a class="text-slate-500 hover:text-primary transition-colors" href="#">
+<svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px" xmlns="http://www.w3.org/2000/svg"><path d="M216,24H40A16,16,0,0,0,24,40V216a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V40A16,16,0,0,0,216,24Zm0,192H40V40H216V216ZM96,112v64a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0Zm88,28v36a8,8,0,0,1-16,0V140a20,20,0,0,0-40,0v36a8,8,0,0,1-16,0V112a8,8,0,0,1,15.79-1.78A36,36,0,0,1,184,140ZM100,84A12,12,0,1,1,88,72,12,12,0,0,1,100,84Z"></path></svg>
+</a>
+</div>
+</div>
+<div class="mt-8 border-t border-primary/20 pt-8 text-center text-slate-500">
+<p>© 2024 LegalEase AI. All rights reserved.</p>
+</div>
+</div>
+</footer>
+</div>
+</div>
+
+</body></html>
