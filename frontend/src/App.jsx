@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/ui/Navbar';
 import Homepage from './pages/Homepage';
 import AuthPage from './components/ui/Authpage';
+import Clausemain from './pages/Clausemain';
 
 function App() {
   const [theme, setTheme] = useState('light');
@@ -55,6 +56,10 @@ function App() {
         onAuthSuccess={handleAuthSuccess}
         theme={theme}
       />
+      
+      {/* Pass theme and toggleTheme to Clausemain */}
+      <Clausemain theme={theme} toggleTheme={toggleTheme} />
+
     </div>
   );
 }
