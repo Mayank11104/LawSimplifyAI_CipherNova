@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Moon, Sun, Menu, X } from 'lucide-react';
 // Import your AuthPage component
 import AuthPage from './Authpage';
+import aiLogo from "../../assets/homepage/logoo.jpg";
 
 const Navbar = ({ theme, toggleTheme }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -78,25 +79,26 @@ const Navbar = ({ theme, toggleTheme }) => {
           <div className="flex justify-between items-center h-16">
             {/* Logo Section */}
             <div className="flex-shrink-0 flex items-center">
-              <div
-                className={`ml-5 w-10 h-10 rounded-lg flex items-center justify-center ${
-                  theme === 'dark' ? 'bg-white' : 'bg-black'
-                }`}
-              >
-                <span
-                  className={`text-xl font-bold ${theme === 'dark' ? 'text-black' : 'text-white'}`}
-                >
-                  CC
-                </span>
-              </div>
-              <span
-                className={`ml-3 text-xl font-semibold ${
-                  theme === 'dark' ? 'text-white' : 'text-[#323949]'
-                }`}
-              >
-                ClauseCraft
-              </span>
-            </div>
+  {/* LawSimplify text */}
+  <span
+    className={`ml-3 text-2xl font-semibold ${
+      theme === 'dark' ? 'text-white' : 'text-[#323949]'
+    }`}
+  >
+    LawSimplify
+  </span>
+
+  {/* AI logo in rounded rectangle with circular corners */}
+  <div className="ml-2 px-3 py-1 rounded-lg flex items-center justify-center bg-black">
+  <img
+    src={aiLogo}
+    alt="AI"
+    className="w-10 h-10 object-contain"
+  />
+</div>
+
+</div>
+
 
             {/* Desktop Navigation */}
             <div className="hidden md:block">

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowRight, Star, CheckCircle } from 'lucide-react';
+import homepageAnimation from '@/assets/homepage/homepageanimation.gif';
 
 const Homepage = ({ theme }) => {
   // State and refs for the How It Works section
@@ -252,13 +253,9 @@ const Homepage = ({ theme }) => {
                 }`}
               >
                 <img
-                  src="/homepage.png"
+                  src={homepageAnimation}
                   alt="Text Summarization Illustration"
                   className="w-full h-auto object-cover"
-                  onError={(e) => {
-                    e.target.src =
-                      "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect width='600' height='400' fill='%23f3f4f6'/%3E%3Ctext x='300' y='200' text-anchor='middle' fill='%23374151' font-size='24' font-family='Arial'%3EImage Placeholder%3C/text%3E%3C/svg%3E";
-                  }}
                 />
               </div>
 
