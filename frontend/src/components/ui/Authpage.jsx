@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Phone, Eye, EyeOff } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
-import { jwtDecode } from 'jwt-decode';
+import  { jwtDecode } from 'jwt-decode';
+import { FcGoogle } from "react-icons/fc";
+
 
 // API configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -10,13 +12,10 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const authAPI = {
   // Login with email/password
   login: async (email, password) => {
-    const formData = new FormData();
-    formData.append('username', email);
-    formData.append('password', password);
 
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
-      body: formData,
+      body: JSON.stringify({ email, password }),
       credentials: 'include',
     });
 
@@ -63,7 +62,7 @@ const authAPI = {
 
   // Google OAuth login
   googleLogin: async (credential) => {
-    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+    const response = await fetch(`${API_BASE_URL}/auth/google/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -75,32 +74,6 @@ const authAPI = {
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage = 'Google login failed';
-      try {
-        const errorJson = JSON.parse(errorText);
-        errorMessage = errorJson.message || errorMessage;
-      } catch {
-        errorMessage = errorText || errorMessage;
-      }
-      throw new Error(errorMessage);
-    }
-
-    return await response.json();
-  },
-
-  // Phone login (if supported by your backend)
-  phoneLogin: async (phone, password) => {
-    const response = await fetch(`${API_BASE_URL}/auth/phone-login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ phone, password }),
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorMessage = 'Phone login failed';
       try {
         const errorJson = JSON.parse(errorText);
         errorMessage = errorJson.message || errorMessage;
@@ -235,21 +208,10 @@ const AuthPage = ({ isOpen, onClose, onAuthSuccess, theme = 'light' }) => {
         // Handle login
         if (loginMethod === 'email') {
           response = await authAPI.login(formData.email, formData.password);
-        } else {
-          response = await authAPI.phoneLogin(formData.phone, formData.password);
-        }
+        } 
 
         setSuccess('Login successful!');
 
-        // Store token if provided
-        if (response.id_token) {
-          localStorage.setItem('access_token', response.id_token);
-        }
-        if (response.access_token) {
-          localStorage.setItem('access_token', response.access_token);
-          localStorage.setItem('refresh_token', response.refresh_token); // optional
-          localStorage.setItem('user', JSON.stringify(response.user)); // optional
-        }
 
         if (response.user) {
           localStorage.setItem('user', JSON.stringify(response.user));
@@ -488,17 +450,19 @@ const AuthPage = ({ isOpen, onClose, onAuthSuccess, theme = 'light' }) => {
           )}
 
           {/* Google OAuth Button */}
+          {/* Google OAuth Button */}
           <div className="mb-4 flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap={false}
-              size="large"
-              theme={theme === 'dark' ? 'filled_black' : 'outline'}
-              text={activeTab === 'login' ? 'signin_with' : 'signup_with'}
-              shape="rectangular"
-            />
+            <button
+              onClick={() => {
+                window.location.href = `${API_BASE_URL}/auth/google/login`;
+              }}
+              className="flex items-center gap-2 border px-4 py-2 rounded-lg hover:bg-gray-100 transition"
+            >
+              <FcGoogle size={20} />
+              Continue with Google
+            </button>
           </div>
+
 
           {/* Divider */}
           <div className="relative mb-4">

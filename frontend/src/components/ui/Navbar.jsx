@@ -4,7 +4,7 @@ import { Moon, Sun, Menu, X } from 'lucide-react';
 import AuthPage from './Authpage';
 import aiLogo from "../../assets/homepage/logoo.jpg";
 
-const Navbar = ({ theme, toggleTheme }) => {
+const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // Add state for controlling the Auth modal
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -146,16 +146,17 @@ const Navbar = ({ theme, toggleTheme }) => {
               </button>
 
               {/* Login Button - Now opens Auth Modal */}
-              <button
-                onClick={openAuthModal}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 ${
-                  theme === 'dark'
-                    ? 'bg-white text-[#323949] hover:bg-gray-100'
-                    : 'bg-[#323949] text-white hover:bg-gray-800'
-                }`}
-              >
-                Login
-              </button>
+              {!isAuthenticated && (
+                <button
+                  onClick={openAuthModal}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 ${theme === 'dark'
+                      ? 'bg-white text-[#323949] hover:bg-gray-100'
+                      : 'bg-[#323949] text-white hover:bg-gray-800'
+                    }`}
+                >
+                  Login
+                </button>
+              )}
 
               {/* Mobile Menu Button */}
               <button

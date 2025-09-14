@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowRight, Star, CheckCircle } from 'lucide-react';
 import homepageAnimation from '@/assets/homepage/homepageanimation.gif';
+import { useNavigate } from "react-router-dom";
 
-const Homepage = ({ theme }) => {
+const Homepage = ({ theme,authError, onGetStartedClick }) => {
   // State and refs for the How It Works section
   const [visibleSteps, setVisibleSteps] = useState(new Set());
+  const navigate = useNavigate();
   const sectionRef = useRef(null);
   const stepRefs = useRef([]);
   const [animationPhase, setAnimationPhase] = useState(0);
@@ -12,13 +14,24 @@ const Homepage = ({ theme }) => {
   const [isInView, setIsInView] = useState(false);
   const animationTimeouts = useRef([]);
   const animationIntervalRef = useRef(null);
-
   const handleGetStarted = () => {
     try {
-      // Add your get started logic here
-      console.log('Get started clicked');
+      console.log("Get started clicked");
+  
+      const user = localStorage.getItem("user");
+      if (user) {
+        // user already logged in → skip auth modal
+        console.log("User found in localStorage:", JSON.parse(user));
+        navigate("/clausemain");
+        // you can redirect or show dashboard here
+        return;
+      }
+  
+      // no user → open auth modal
+      openAuthModal();
+  
     } catch (error) {
-      console.error('Get started error:', error);
+      console.error("Get started error:", error);
     }
   };
 
@@ -198,6 +211,11 @@ const Homepage = ({ theme }) => {
         theme === 'dark' ? 'bg-[#222831] text-white' : 'bg-[#FDFAF6]/95 text-gray-900'
       }`}
     >
+      {authError && (
+  <div className="mb-6 p-4 rounded bg-red-100 text-red-700 border border-red-300 text-center">
+    {authError}
+  </div>
+)}
       {/* Hero Section */}
       <section id="home" className="pt-0 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-8xl mx-auto pl-10 pr-10">
@@ -225,6 +243,7 @@ const Homepage = ({ theme }) => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={handleGetStarted}
+                  // onClick={onGetStartedClick}
                   className={`px-8 py-4 text-lg font-medium rounded-lg transition-all duration-200 hover:scale-105 flex items-center justify-center ${
                     theme === 'dark'
                       ? 'bg-[#FDFAF6]/95 text-[#323949] hover:white shadow-lg hover:shadow-blue-500/25'

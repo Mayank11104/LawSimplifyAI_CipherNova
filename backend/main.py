@@ -1,359 +1,254 @@
-from fastapi import FastAPI, HTTPException, Depends, status, Form, Response
+from ast import Try
+from mimetypes import init
+
+from fastapi import FastAPI,Request, HTTPException, Depends, status, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import JSONResponse
-from contextlib import asynccontextmanager
-from decouple import config
-import uvicorn
+from fastapi.responses import RedirectResponse
 
-# Import our authentication modules
-from auth.models import (
-    UserSignupEmail, UserSignupPhone, UserLoginEmail, UserLoginPhone,
-    GoogleLoginRequest,GoogleLoginResponse, UserResponse, LoginResponse, TokenResponse,
-    MessageResponse, RefreshTokenRequest, PasswordResetRequest,
-    ErrorResponse, ValidationErrorResponse
-)
-from auth.authentication import (
-    register_user_email, register_user_phone,
-    login_user_email, login_user_phone, google_oauth_login,
-    refresh_access_token
-)
-from utils.security import (
-    init_database, extract_token_data, get_user_by_id,
-    is_valid_email_format, is_valid_phone_format
-)
+from google.oauth2 import id_token
+from google.auth.transport import requests
+from models import User,UserOut
+import httpx
+from db import db, get_user_data
+from pydantic import ValidationError
+from settings.config import settings
+import jwt
 
-# ==============================
-# Configuration
-# ==============================
-APP_NAME = config("APP_NAME", default="Auth Backend")
-BACKEND_CORS_ORIGINS = config("BACKEND_CORS_ORIGINS", default='["http://localhost:5173"]')
+from datetime import datetime, timezone, timedelta
 
-# Parse CORS origins (handle both JSON string and comma-separated)
-try:
-    import json
-    CORS_ORIGINS = json.loads(BACKEND_CORS_ORIGINS)
-except:
-    CORS_ORIGINS = [origin.strip() for origin in BACKEND_CORS_ORIGINS.split(",")]
+from passlib.context import CryptContext
 
-# ==============================
-# FastAPI App Lifecycle
-# ==============================
-@asynccontextmanager
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+async def init_indexes():
+    await db["users"].create_index("email", unique=True)
+    await db["users"].create_index("google_id", unique=True)
+
 async def lifespan(app: FastAPI):
-    """App startup and shutdown events"""
-    # Startup
-    print(f"🚀 Starting {APP_NAME}")
-    print("📦 Initializing database...")
-    await init_database()
-    print("✅ Database initialized successfully")
+    print("App startup")
+    await init_indexes()
+
     yield
-    # Shutdown
-    print(f"👋 Shutting down {APP_NAME}")
+    db.client.close()
 
-# ==============================
-# FastAPI App Creation
-# ==============================
-app = FastAPI(
-    title=APP_NAME,
-    description="Secure Authentication API with Email, Phone, and Google OAuth",
-    version="1.0.0",
-    lifespan=lifespan
-)
+    print("App shutdown")
 
-# ==============================
-# CORS Middleware
-# ==============================
+app = FastAPI(lifespan=lifespan)
+
+origins = [
+    "http://localhost:5173",   # React dev server
+    "http://127.0.0.1:8000",
+    
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173"],      # Specific origins
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],        # Allow all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],
 )
 
-# ==============================
-# Security Dependencies
-# ==============================
-security = HTTPBearer(auto_error=False)
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
-    """Get current authenticated user from JWT token"""
-    if not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required"
-        )
-    
-    token_data = extract_token_data(credentials.credentials)
-    if not token_data:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token"
-        )
-    
-    user = await get_user_by_id(token_data["user_id"])
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
-    
-    return user
 
-# ==============================
-# Exception Handlers
-# ==============================
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    """Handle HTTP exceptions with consistent error format"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "success": False,
-            "error": exc.detail if isinstance(exc.detail, str) else exc.detail.get("error", "Unknown error"),
-            "message": exc.detail if isinstance(exc.detail, str) else exc.detail.get("message", "An error occurred"),
-            "details": exc.detail if isinstance(exc.detail, dict) else None
-        }
+
+
+
+
+users = db["users"]
+
+def create_app_token(user_id: str):
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)
+    payload = {"sub": user_id, "exp": expire}
+    return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+# This dependency is now obsolete as we are using cookies
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token") 
+
+def verify_app_token(request: Request) -> str:
+    """
+    Verifies a JWT token from a cookie and returns the user ID.
+
+    This function is designed to be a FastAPI dependency.
+    """
+    # We create a generic exception to raise for all authentication errors
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"}, # Still good practice for docs
     )
+    
+    # Check for the token in the cookies
+    token = request.cookies.get("token")
+    if not token:
+        raise credentials_exception
 
-@app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
-    """Handle unexpected exceptions"""
-    print(f"❌ Unexpected error: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={
-            "success": False,
-            "error": "Internal Server Error",
-            "message": "Something went wrong on our end. Please try again."
-        }
-    )
-
-# ==============================
-# Health Check Routes
-# ==============================
-@app.get("/")
-async def root():
-    """Root endpoint - API status"""
-    return {
-        "message": f"Welcome to {APP_NAME}",
-        "status": "running",
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
-
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {
-        "status": "healthy",
-        "message": "API is running normally"
-    }
-
-# ==============================
-# Authentication Routes
-# ==============================
-
-# 1. USER REGISTRATION (EMAIL)
-@app.post("/auth/register", response_model=LoginResponse)
-async def register_user(user_data: UserSignupEmail, response: Response):
-    """
-    Register new user with email
-    Matches React: authAPI.register(userData)
-    """
     try:
-        result = await register_user_email(user_data,response)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Registration error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Registration failed. Please try again."
+        # Decode the token
+        # This will now be printed if the token exists
+        payload = jwt.decode(
+            token, 
+            settings.SECRET_KEY, 
+            algorithms=[settings.ALGORITHM]
         )
-
-# 2. USER LOGIN (EMAIL) - FORM DATA
-@app.post("/auth/login", response_model=LoginResponse)
-async def login_user_form(
-    username: str = Form(...),  # React sends 'username' but it's actually email
-    password: str = Form(...)
-):
-    """
-    User login with email using form data
-    Matches React: formData.append('username', email)
-    """
-    try:
-        # Create UserLoginEmail object from form data
-        if is_valid_email_format(username):
-            login_data = UserLoginEmail(email=username, password=password)
-            result = await login_user_email(login_data)
-        else:
-            # Maybe it's a phone number
-            if is_valid_phone_format(username):
-                login_data = UserLoginPhone(phone=username, password=password)
-                result = await login_user_phone(login_data)
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail={
-                        "error": "Invalid login format",
-                        "message": "Please enter a valid email address or phone number",
-                        "suggestion": "Check your email/phone format and try again"
-                    }
-                )
+       
+        # Extract the user ID from the 'sub' (subject) claim
+        user_id: str = payload.get("sub")
         
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Login error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed. Please try again."
-        )
+        if user_id is None:
+            # If the 'sub' claim is missing
+            raise credentials_exception
+        
+    except (jwt.exceptions.PyJWTError, ValidationError, jwt.PyJWTError) as e:
+        # The token is invalid for any reason
+        raise credentials_exception from e
 
-# 3. PHONE LOGIN (JSON)
-@app.post("/auth/phone-login", response_model=LoginResponse)
-async def phone_login(login_data: UserLoginPhone):
-    """
-    User login with phone number
-    Matches React: authAPI.phoneLogin(phone, password)
-    """
-    try:
-        result = await login_user_phone(login_data)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Phone login error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Phone login failed. Please try again."
-        )
+    return user_id
 
-# 4. GOOGLE OAUTH LOGIN
-@app.post("/auth/google", response_model=GoogleLoginResponse)
-async def google_login(google_data: GoogleLoginRequest):
-    try:
-        result = await google_oauth_login(google_data)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Google login error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Google login failed. Please try again."
-        )
 
-# 5. REFRESH TOKEN
-@app.post("/auth/refresh", response_model=TokenResponse)
-async def refresh_token(token_data: RefreshTokenRequest):
-    """
-    Refresh access token using refresh token
-    """
-    try:
-        result = await refresh_access_token(token_data.refresh_token)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Token refresh error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Token refresh failed. Please try again."
-        )
 
-# 6. GET CURRENT USER
-@app.get("/auth/me", response_model=UserResponse)
-async def get_current_user_info(current_user: dict = Depends(get_current_user)):
-    """
-    Get current user information
-    Requires valid JWT token
-    """
-    from auth.models import user_document_to_response
-    return user_document_to_response(current_user)
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
-# 7. FORGOT PASSWORD (PLACEHOLDER)
-@app.post("/auth/forgot-password", response_model=MessageResponse)
-async def forgot_password(reset_data: PasswordResetRequest):
-    """
-    Password reset request
-    Matches React: authAPI.forgotPassword(email)
-    """
-    try:
-        # TODO: Implement email sending logic
-        # For now, return success message
-        return MessageResponse(
-            message=f"If an account with {reset_data.email} exists, you will receive a password reset email shortly.",
-            success=True
-        )
-    except Exception as e:
-        print(f"Forgot password error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Password reset request failed. Please try again."
-        )
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
 
-# 8. LOGOUT (CLIENT-SIDE HANDLED)
-@app.post("/auth/logout", response_model=MessageResponse)
-async def logout(current_user: dict = Depends(get_current_user)):
-    """
-    Logout user (mainly for token cleanup)
-    Client should also clear localStorage
-    """
-    # TODO: Add refresh token blacklisting logic if needed
-    return MessageResponse(
-        message="Logged out successfully",
-        success=True
+@app.post("/auth/register")
+async def register(user: User):
+    if await users.find_one({"email": user.email}):
+        raise HTTPException(status_code=400, detail="Email already registered")
+    user.password = hash_password(user.password)
+    result = await users.insert_one(user.model_dump())
+    return {"id": str(result.inserted_id)}
+
+@app.post("/auth/login")
+async def login(email: str, password: str, response: Response):
+    user = await users.find_one({"email": email})
+    if not user or not verify_password(password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_app_token(str(user["_id"]))
+    response.set_cookie("token", token, httponly=True, samesite="strict", secure=True)
+    return {"message": "Login successful"}
+
+@app.post("/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie("token")
+    return {"message": "Logged out"}
+
+# --- Step 1: Redirect user to Google ---
+@app.get("/auth/google/login")
+async def google_login():
+    google_auth_url = (
+        "https://accounts.google.com/o/oauth2/v2/auth"
+        f"?client_id={settings.GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={settings.REDIRECT_URI}"
+        "&response_type=code"
+        "&scope=openid%20email%20profile"
     )
+    return RedirectResponse(google_auth_url)
 
-# ==============================
-# Additional Utility Routes
-# ==============================
-@app.get("/auth/validate-token")
-async def validate_token(current_user: dict = Depends(get_current_user)):
+
+@app.get("/auth/me", response_model=UserOut)
+async def get_me(user_id: str = Depends(verify_app_token)):
     """
-    Validate JWT token
-    Returns user info if token is valid
+    Get the profile for the currently authenticated user.
     """
-    return {
-        "valid": True,
-        "user_id": str(current_user["_id"]),
-        "email": current_user.get("email"),
-        "name": current_user["name"]
-    }
+    # We fetch the full document from the database
+    user_data = await get_user_data(user_id)
 
-# ==============================
-# Development Routes (Optional)
-# ==============================
-@app.get("/auth/test")
-async def test_auth():
-    """Test endpoint for development"""
-    return {
-        "message": "Auth API is working!",
-        "endpoints": [
-            "POST /auth/register - User registration",
-            "POST /auth/login - Email/Phone login (form data)",
-            "POST /auth/phone-login - Phone login (JSON)",
-            "POST /auth/google - Google OAuth login",
-            "POST /auth/refresh - Refresh token",
-            "GET /auth/me - Get current user",
-            "POST /auth/forgot-password - Password reset",
-            "POST /auth/logout - Logout user"
-        ]
-    }
+    if not user_data:
+        raise HTTPException(status_code=404, detail="User not found")
 
-# ==============================
-# Run Application
-# ==============================
-if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    # FastAPI will look at the returned `user_data` dictionary and match its keys
+    # to the fields in the corrected `UserOut` model ('id', 'email', 'username').
+    return user_data
+
+# --- Step 2: Callback from Google ---
+@app.get("/auth/google/callback")
+async def google_callback(request: Request, response: Response): # Add Response to the signature
+    code = request.query_params.get("code")
+    
+    
+
+    if not code:
+        raise HTTPException(status_code=400, detail="No code in callback")
+
+    # Step 3: Exchange code for tokens
+    token_url = "https://oauth2.googleapis.com/token"
+    
+    # Add a try...except block to catch the HTTP error
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(token_url, data={
+                "code": code,
+                "client_id": settings.GOOGLE_CLIENT_ID,
+                "client_secret": settings.GOOGLE_CLIENT_SECRET,
+                "redirect_uri": settings.REDIRECT_URI,
+                "grant_type": "authorization_code",
+            })
+            
+            # This is the key line to see the error from Google
+            resp.raise_for_status() 
+            
+            token_data = resp.json()
+
+    except httpx.HTTPStatusError as exc:
+        # This will catch and print the specific error from Google
+        print(f"HTTP Error: {exc.response.status_code} - {exc.response.text}")
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=f"Google token exchange failed: {exc.response.text}"
+        )
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error during token exchange")
+
+
+    id_token_str = token_data.get("id_token")
+    if not id_token_str:
+        raise HTTPException(status_code=400, detail="No ID token returned")
+
+    # Step 4: Verify ID Token with google-auth
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            id_token_str,
+            requests.Request(),
+            settings.GOOGLE_CLIENT_ID,
+            clock_skew_in_seconds=300
+        )
+    except Exception as e:
+       
+        raise HTTPException(status_code=401, detail=f"Invalid Google token : {e}")
+
+    # Step 5: Upsert user in Mongo
+    google_id = idinfo["sub"]
+    
+    email = idinfo.get("email")
+    name = idinfo.get("name")
+
+    user = await users.find_one({"google_id": google_id})
+    
+    if not user:
+        
+        new_user = User(
+        username=name,
+        email=email,
+        google_id=google_id,
+        profile_pic=idinfo["picture"],
+        created_at=datetime.now(timezone.utc)
+        )
+        result = await users.insert_one(new_user.model_dump())
+        user_id = str(result.inserted_id)
+    else:
+        user_id = str(user["_id"])
+
+    # Step 6: Create session JWT
+    app_token = create_app_token(user_id)
+    response = RedirectResponse(url="http://localhost:5173/clausemain")
+    response.set_cookie(key="token", value=app_token, httponly=True,samesite="strict",secure=True)
+    print("callback done")
+    return response
+
