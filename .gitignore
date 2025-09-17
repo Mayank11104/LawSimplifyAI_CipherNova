@@ -2,3 +2,17 @@
 backend/.env
 frontend/.env
 .env*
+backend/__pycache__/
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Ignore service account key
+genaihackathon-*.json 
+
+*.pdf
+*.pptx
