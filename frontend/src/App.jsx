@@ -46,10 +46,12 @@ function AppContent() {
   const closeAuthModal = () => setIsAuthModalOpen(false);
 
   const handleAuthSuccess = (user) => {
+    console.log("yash", user)
     if (user?.token) {
       localStorage.setItem("token", user.token);
     }
     if (user?.profile) {
+      console.log("yash")
       localStorage.setItem("user", JSON.stringify(user.profile));
       setCurrentUser(user.profile);
     }
@@ -57,9 +59,7 @@ function AppContent() {
     closeAuthModal();
   };
 
-  useEffect(() => {
-    console.log("👤 currentUser updated:", currentUser);
-  }, [currentUser]);
+  
 
   // Restore user on refresh
   useEffect(() => {
@@ -69,6 +69,10 @@ function AppContent() {
       setIsAuthenticated(true);
     }
   }, []);
+  
+  useEffect(() => {
+    console.log("👤 currentUser updated:", currentUser);
+  }, [currentUser]);
 
   return (
     <div
@@ -102,7 +106,7 @@ function AppContent() {
           path="/clausemain"
           element={
             <ProtectedRoute >
-              <Clausemain theme={theme} toggleTheme={toggleTheme} currentuser={currentUser} />
+              <Clausemain theme={theme} toggleTheme={toggleTheme} currentUser={currentUser} />
             </ProtectedRoute>
           }
         />

@@ -28,6 +28,12 @@ class Settings(BaseSettings):
     APP_NAME: str = "Default App Name"
     MAX_CONNECTIONS: int = 25
 
+    google_application_credentials: str
+    gcp_project_id: str
+    gcp_location_for_docai: str
+    docai_processor_id: str
+    gcp_location_for_vertexai: str
 
-settings = Settings()
+
+settings = Settings() # type: ignore
 

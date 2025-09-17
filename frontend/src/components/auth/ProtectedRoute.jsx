@@ -5,6 +5,7 @@ import axios from "axios";
 export default function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -13,18 +14,17 @@ export default function ProtectedRoute({ children }) {
           withCredentials: true,
         });
 
-        if (res.status === 200) {
+        if (res.status === 200 && res.data) {
           setIsAuth(true);
+          setCurrentUser(res.data);
+
+          // sync to localStorage so app refresh works
+          localStorage.setItem("user", JSON.stringify(res.data));
+        } else {
+          setIsAuth(false);
         }
-        console.log(res) 
-        
-        if(res.data){
-            localStorage.setItem("user", JSON.stringify(res.data));
-        }
-        
       } catch (err) {
-        // Log the error to help with debugging
-        console.error('Authentication check failed:', err.message);
+        console.error("Authentication check failed:", err.message);
         setIsAuth(false);
       } finally {
         setLoading(false);
@@ -35,12 +35,14 @@ export default function ProtectedRoute({ children }) {
   }, []);
 
   if (loading) {
-    // Show a loading screen while the API call is in progress
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (!isAuth) {
-    // If not authenticated, redirect to the homepage
     return (
       <Navigate
         to="/"
@@ -50,6 +52,8 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  // If authenticated, render the protected content
-  return children;
+  // ✅ Clone child and inject currentUser as prop
+  return currentUser
+    ? { ...children, props: { ...children.props, currentUser } }
+    : children;
 }

@@ -1,4 +1,4 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient 
 from bson import ObjectId
 from settings.config import settings
 

@@ -1,9 +1,10 @@
 from ast import Try
 from mimetypes import init
 
-from fastapi import FastAPI,Request, HTTPException, Depends, status, Response
+from fastapi import FastAPI,Request, HTTPException, Depends, status, Response,UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from typing import List
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -13,7 +14,7 @@ from db import db, get_user_data
 from pydantic import ValidationError
 from settings.config import settings
 import jwt
-
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 
 from passlib.context import CryptContext
@@ -25,6 +26,7 @@ async def init_indexes():
     await db["users"].create_index("email", unique=True)
     await db["users"].create_index("google_id", unique=True)
 
+@asynccontextmanager
 async def lifespan(app: FastAPI):
     print("App startup")
     await init_indexes()
@@ -119,6 +121,8 @@ def verify_password(plain: str, hashed: str) -> bool:
 async def register(user: User):
     if await users.find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
+    if user.password is None:
+                raise ValueError("Password is missing")
     user.password = hash_password(user.password)
     result = await users.insert_one(user.model_dump())
     return {"id": str(result.inserted_id)}
@@ -133,10 +137,17 @@ async def login(email: str, password: str, response: Response):
     response.set_cookie("token", token, httponly=True, samesite="strict", secure=True)
     return {"message": "Login successful"}
 
-@app.post("/auth/logout")
+@app.get("/auth/logout")
 async def logout(response: Response):
-    response.delete_cookie("token")
+    response.delete_cookie(
+        key="token",
+        httponly=False,      
+        samesite="none",    
+        secure=True    
+            
+    )
     return {"message": "Logged out"}
+
 
 # --- Step 1: Redirect user to Google ---
 @app.get("/auth/google/login")
@@ -248,7 +259,80 @@ async def google_callback(request: Request, response: Response): # Add Response 
     # Step 6: Create session JWT
     app_token = create_app_token(user_id)
     response = RedirectResponse(url="http://localhost:5173/clausemain")
-    response.set_cookie(key="token", value=app_token, httponly=True,samesite="strict",secure=True)
+    response.set_cookie(key="token", value=app_token, httponly=False,samesite="none",secure=True)
     print("callback done")
     return response
 
+from scripts.extract_and_translate_pipeline import PipelineConfig,initialize_clients,extraction_agent,translate_text, logger
+
+
+
+
+@app.post("/api/upload")
+async def upload_multiple_files(files: List[UploadFile] = File(...)):
+    """
+    Handles multiple file uploads, processes them, and returns a risk analysis.
+    """
+    results = []
+    
+    # Initialize clients and config outside the loop for efficiency
+    try:
+        config = PipelineConfig.from_env()
+        docai_client, translation_model = initialize_clients(config)
+    except Exception as e:
+        return {
+            "message": "Initialization failed",
+            "error": f"Failed to initialize Google Cloud clients: {str(e)}"
+        }
+
+    for file in files:
+        # Create a new result object for each file
+        file_result = {
+            "filename": file.filename,
+            "risk": {"level": "Error", "details": "Processing failed."},
+        }
+
+        try:
+            if file.filename is None:
+                raise ValueError("Filename is missing from the uploaded file.")
+
+            file_content = await file.read()
+
+            # Step 1: Extract text from the document
+            extracted_text = extraction_agent(file_content, file.filename, docai_client, config)
+            
+            # Use the logger for a reliable output
+            logger.info(f"Extracted Text (first 100 chars): {extracted_text[:100]}...")
+            
+            # Step 2: Translate the extracted text
+            # Add a check to prevent sending empty text to the model
+            if not extracted_text:
+                raise ValueError("Text extraction returned an empty string.")
+            
+            translated_text = translate_text(extracted_text, translation_model)
+
+            logger.info(f"Translated Text (first 100 chars): {translated_text[:100]}...")
+            
+            
+            # Step 3: Analyze the translated text for risk
+            # Note: You need a function named `analyze_text_risk` defined in main.py
+            # risk_result = analyze_text_risk(translated_text)
+            
+            # Update the file_result with the successful analysis
+            # file_result["risk"] = risk_result
+            
+        except Exception as e:
+            # Catch any error and update the file_result with the error message
+            logger.error(f"Error processing file {file.filename}: {e}")
+            file_result["risk"] = {
+                "level": "Error",
+                "details": f"An error occurred during processing: {str(e)}"
+            }
+        
+        results.append(file_result)
+    
+    return {
+        "message": f"{len(files)} files processed successfully!",
+        'extracted_text': extracted_text,
+        'translated_text': translated_text
+    }
