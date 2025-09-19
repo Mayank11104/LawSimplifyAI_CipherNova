@@ -28,7 +28,7 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
       }
   
       // no user → open auth modal
-      openAuthModal();
+      onGetStartedClick();
   
     } catch (error) {
       console.error("Get started error:", error);
