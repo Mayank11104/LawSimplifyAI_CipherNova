@@ -25,6 +25,7 @@ export default function ProtectedRoute({ children }) {
         }
       } catch (err) {
         console.error("Authentication check failed:", err.message);
+        localStorage.removeItem("user");
         setIsAuth(false);
       } finally {
         setLoading(false);

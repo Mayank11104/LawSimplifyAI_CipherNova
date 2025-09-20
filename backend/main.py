@@ -1,10 +1,16 @@
 from ast import Try
 from mimetypes import init
 
+import asyncio
+import uuid
+import os
+from fastapi.responses import StreamingResponse
+import json
+
 from fastapi import FastAPI,Request, HTTPException, Depends, status, Response,UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
-from typing import List
+from typing import List, cast, IO
 
 from google.oauth2 import id_token
 from google.auth.transport import requests
@@ -109,6 +115,49 @@ def verify_app_token(request: Request) -> str:
 
     return user_id
 
+
+PROFILER_URL = "https://doc-profiler-gpu-service-918379302610.asia-southeast1.run.app/profile"
+
+async def profile_text_remotely(text_to_profile: str) -> dict:
+    """
+    Calls the remote document profiling service on Cloud Run.
+    """
+    # Define the JSON payload for the request
+    payload = {
+        "text": text_to_profile,
+        "max_len": 384,
+        "stride": 128,
+        "batch_size": 16,
+    }
+
+    # Set a long timeout, as GPU inference can take time to start and run
+    timeout_config = httpx.Timeout(300.0) # 5 minutes
+
+    try:
+        async with httpx.AsyncClient(timeout=timeout_config) as client:
+            logger.info(f"Sending text to profiler at {PROFILER_URL}...")
+            response = await client.post(PROFILER_URL, json=payload)
+            
+            # Raise an exception for non-2xx responses
+            response.raise_for_status()
+            
+            logger.info("Successfully received profile from model.")
+            return response.json()
+
+    except httpx.RequestError as exc:
+        logger.error(f"HTTP request to profiler failed: {exc}")
+        # Re-raise as an HTTPException to be caught by FastAPI
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"The document profiling service is unavailable or failed: {str(exc)}"
+        )
+    except Exception as e:
+        logger.error(f"An unexpected error occurred while calling the profiler: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred: {str(e)}"
+        )
+    
 
 
 def hash_password(password: str) -> str:
@@ -264,75 +313,69 @@ async def google_callback(request: Request, response: Response): # Add Response 
     return response
 
 from scripts.extract_and_translate_pipeline import PipelineConfig,initialize_clients,extraction_agent,translate_text, logger
+from scripts.refinement import refine
+from tempfile import SpooledTemporaryFile
 
 
 
-
-@app.post("/api/upload")
-async def upload_multiple_files(files: List[UploadFile] = File(...)):
+@app.post("/api/upload_and_stream")
+async def upload_and_stream_processing(files: List[UploadFile] = File(...)):
     """
-    Handles multiple file uploads, processes them, and returns a risk analysis.
+    Accepts a file upload, processes it entirely in memory, and streams
+    real-time status updates and the final result over the same connection.
     """
-    results = []
+    if not files:
+        raise HTTPException(status_code=400, detail="No files provided.")
     
-    # Initialize clients and config outside the loop for efficiency
-    try:
-        config = PipelineConfig.from_env()
-        docai_client, translation_model = initialize_clients(config)
-    except Exception as e:
-        return {
-            "message": "Initialization failed",
-            "error": f"Failed to initialize Google Cloud clients: {str(e)}"
-        }
+    file = files[0]
+    
+    # --- THIS IS THE FIX ---
+    # Read the file content and filename immediately and outside the generator
+    file_content = await file.read()
+    original_filename = file.filename
 
-    for file in files:
-        # Create a new result object for each file
-        file_result = {
-            "filename": file.filename,
-            "risk": {"level": "Error", "details": "Processing failed."},
-        }
-
+    # Now, define the main processing generator which can safely assume it has a filename
+    async def event_generator(content_bytes: bytes, filename: str):
+        # This generator is now only called when we are sure 'filename' is a string
         try:
-            if file.filename is None:
-                raise ValueError("Filename is missing from the uploaded file.")
+            yield f"data: {json.dumps({'status': 'Initializing clients...'})}\n\n"
+            await asyncio.sleep(1)
+            config = PipelineConfig.from_env()
+            docai_client, translation_model = initialize_clients(config)
 
-            file_content = await file.read()
+            yield f"data: {json.dumps({'status': 'Extracting text from document...'})}\n\n"
+            extracted_text = extraction_agent(content_bytes, filename, docai_client, config)
+            
+            yield f"data: {json.dumps({'status': 'Extraction complete.'})}\n\n"
+            await asyncio.sleep(1)
 
-            # Step 1: Extract text from the document
-            extracted_text = extraction_agent(file_content, file.filename, docai_client, config)
-            
-            # Use the logger for a reliable output
-            logger.info(f"Extracted Text (first 100 chars): {extracted_text[:100]}...")
-            
-            # Step 2: Translate the extracted text
-            # Add a check to prevent sending empty text to the model
-            if not extracted_text:
-                raise ValueError("Text extraction returned an empty string.")
-            
+            yield f"data: {json.dumps({'status': 'Translating text...'})}\n\n"
             translated_text = translate_text(extracted_text, translation_model)
+            yield f"data: {json.dumps({'status': 'Translation complete.'})}\n\n"
+            await asyncio.sleep(1)
 
-            logger.info(f"Translated Text (first 100 chars): {translated_text[:100]}...")
-            
-            
-            # Step 3: Analyze the translated text for risk
-            # Note: You need a function named `analyze_text_risk` defined in main.py
-            # risk_result = analyze_text_risk(translated_text)
-            
-            # Update the file_result with the successful analysis
-            # file_result["risk"] = risk_result
-            
+            yield f"data: {json.dumps({'status': 'Sending text to profiling model...'})}\n\n"
+            raw_profile = await profile_text_remotely(translated_text)
+            yield f"data: {json.dumps({'status': 'Profiling complete.'})}\n\n"
+            await asyncio.sleep(1)
+
+            yield f"data: {json.dumps({'status': 'Refining and structuring results...'})}\n\n"
+            refined_profile = refine(raw_profile)
+            yield f"data: {json.dumps({'status': 'Process complete!'})}\n\n"
+            await asyncio.sleep(1)
+
+            yield f"event: final_result\ndata: {json.dumps(refined_profile)}\n\n"
+
         except Exception as e:
-            # Catch any error and update the file_result with the error message
-            logger.error(f"Error processing file {file.filename}: {e}")
-            file_result["risk"] = {
-                "level": "Error",
-                "details": f"An error occurred during processing: {str(e)}"
-            }
-        
-        results.append(file_result)
-    
-    return {
-        "message": f"{len(files)} files processed successfully!",
-        'extracted_text': extracted_text,
-        'translated_text': translated_text
-    }
+            error_message = f"An error occurred: {str(e)}"
+            logger.error(f"Error processing file {filename}: {error_message}")
+            yield f"event: error\ndata: {json.dumps({'error': error_message})}\n\n"
+
+    # Handle the case where the filename is missing
+    if not original_filename:
+        async def error_generator():
+            yield f"event: error\ndata: {json.dumps({'error': 'A file was uploaded without a filename.'})}\n\n"
+        return StreamingResponse(error_generator(), media_type="text/event-stream")
+
+    # If the filename exists, proceed with the main processing stream
+    return StreamingResponse(event_generator(file_content, original_filename), media_type="text/event-stream")
