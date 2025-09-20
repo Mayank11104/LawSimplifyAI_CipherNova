@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowRight, Star, CheckCircle } from 'lucide-react';
 import homepageAnimation from '@/assets/homepage/homepageanimation.gif';
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
-const Homepage = ({ theme,authError, onGetStartedClick }) => {
+const Homepage = ({ theme, authError, onGetStartedClick }) => {
   // State and refs for the How It Works section
   const [visibleSteps, setVisibleSteps] = useState(new Set());
   const navigate = useNavigate();
@@ -16,22 +16,22 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
   const animationIntervalRef = useRef(null);
   const handleGetStarted = () => {
     try {
-      console.log("Get started clicked");
-  
-      const user = localStorage.getItem("user");
+      console.log('Get started clicked');
+
+      const user = localStorage.getItem('user');
       if (user) {
         // user already logged in → skip auth modal
-        console.log("User found in localStorage:", JSON.parse(user));
-        navigate("/clausemain");
+        console.log('User found in localStorage:', JSON.parse(user));
+        navigate('/clausemain');
         // you can redirect or show dashboard here
         return;
       }
-  
+
       // no user → open auth modal
       onGetStartedClick();
   
     } catch (error) {
-      console.error("Get started error:", error);
+      console.error('Get started error:', error);
     }
   };
 
@@ -212,24 +212,25 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
       }`}
     >
       {authError && (
-  <div className="mb-6 p-4 rounded bg-red-100 text-red-700 border border-red-300 text-center">
-    {authError}
-  </div>
-)}
+        <div className="mb-6 p-4 rounded bg-red-100 text-red-700 border border-red-300 text-center">
+          {authError}
+        </div>
+      )}
       {/* Hero Section */}
       <section id="home" className="pt-0 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-8xl mx-auto pl-10 pr-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[600px]">
             {/* Left Side - Text Content */}
-            <div className="space-y-8">
+            <div className="space-y-8 max-w-6xl">
               <h1
-                className={`text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight ${
+                className={`text-4xl sm:text-5xl lg:text-7xl leading-tight ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
                 }`}
+                style={{ fontWeight: '700'  }} // Put any weight you want here
               >
-                Build Something
-                <span className={`block ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                  Amazing
+                Simplify Legal Complexity
+                <span className={`block ${theme === 'dark' ? 'text-[#1CA2D4]' : 'text-[#1CA2D4]'}`}>
+                  With AI
                 </span>
               </h1>
               <p
@@ -237,8 +238,8 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}
               >
-                Transform your ideas into reality with our cutting-edge platform. Fast, reliable,
-                and built for the future.
+                AI solution that simplifies complex legal documents into clear, accessible guidance,
+                empowering users to make informed decisions.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
@@ -313,7 +314,7 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
                 theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
               }`}
             >
-              LegalEase AI offers a suite of tools designed to bring clarity and confidence to your
+              Simplify AI offers a suite of tools designed to bring clarity and confidence to your
               legal document reviews.
             </p>
           </div>
@@ -357,7 +358,7 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
                       : 'text-gray-900 group-hover:text-pink-600'
                   }`}
                 >
-                  Upload & Summarize
+                  Upload & Simplify
                 </h3>
                 <p
                   className={`transition-colors duration-300 ${
@@ -366,7 +367,7 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
                       : 'text-gray-600 group-hover:text-gray-700'
                   }`}
                 >
-                  Quickly upload contracts and get a concise summary of key terms and obligations.
+                  Quickly upload contracts and get a simplified summary of key terms and obligations.
                 </p>
               </div>
             </div>
@@ -410,7 +411,7 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
                       : 'text-gray-900 group-hover:text-cyan-600'
                   }`}
                 >
-                  Clause-by-Clause Explanation
+                  Multilingual Made Easy
                 </h3>
                 <p
                   className={`transition-colors duration-300 ${
@@ -419,7 +420,7 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
                       : 'text-gray-600 group-hover:text-gray-700'
                   }`}
                 >
-                  Get a detailed breakdown of each clause, explaining its meaning and implications.
+                  Upload your document any, get a clear easy-to-understand version, and access it instantly in the language you prefer.
                 </p>
               </div>
             </div>
@@ -463,7 +464,7 @@ const Homepage = ({ theme,authError, onGetStartedClick }) => {
                       : 'text-gray-900 group-hover:text-orange-600'
                   }`}
                 >
-                  Ask Questions in English
+                  Q&A chatbot
                 </h3>
                 <p
                   className={`transition-colors duration-300 ${

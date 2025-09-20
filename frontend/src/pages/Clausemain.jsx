@@ -11,14 +11,16 @@ import {
   Moon,
   ChevronLeft,
   Menu,
+  PenIcon,
 } from "lucide-react";
-
+import axios from 'axios';
 
 import UploadDoc from "../components/mainpage/upload_Doc";
 import QnA from "../components/mainpage/Q&A";
 import UserSettings from "../components/mainpage/usersettings";
+import ESign from "../components/mainpage/E_sign";
 
-const Clausemain = ( {theme , toggleTheme, currentUser}) => {
+const Clausemain = ({ theme, toggleTheme, currentUser }) => {
   
   const [activeButton, setActiveButton] = useState("upload");
   const [profileOpen, setProfileOpen] = useState(false);
@@ -27,17 +29,6 @@ const Clausemain = ( {theme , toggleTheme, currentUser}) => {
   const profileRef = useRef(null);
   const notifRef = useRef(null);
   const sidebarRef = useRef(null);
-
-  // Mock user data
-  // const currentUser = {
-  //   username: "John Doe",
-  //   email: "john.doe@example.com",
-  //   profile_pic: "https://api.dicebear.com/7.x/avataaars/svg?seed=John"
-  // };
-
-  // const toggleTheme = () => {
-  //   setTheme(theme === "light" ? "dark" : "light");
-  // };
 
   useEffect(() => {
     if (currentUser) {
@@ -62,17 +53,14 @@ const Clausemain = ( {theme , toggleTheme, currentUser}) => {
   const sidebarButtons = [
     { id: "upload", label: "Upload Document", icon: Upload },
     { id: "qna", label: "AI Q&A", icon: MessageSquare },
-    { id: "documents", label: "Documents", icon: FileText },
-    { id: "notification", label: "Notification", icon: Bell },
+    { id: "E-Sign", label: "E-signature", icon: PenIcon },
     { id: "settings", label: "Settings", icon: SettingsIcon },
   ];
 
   const handleButtonClick = (id) => {
-    // console.log("Clausemain currentUser:", currentUser);
     setActiveButton(id);
   };
 
-  // put this inside your component (above return)
   const handleLogout = async () => {
     try {
       await axios.get(`${import.meta.env.VITE_API_URL}/auth/logout`, {
@@ -87,9 +75,9 @@ const Clausemain = ( {theme , toggleTheme, currentUser}) => {
     }
   };
 
-if (!currentUser) {
-  return <div>Loading...</div>; // or return null
-}
+  if (!currentUser) {
+    return <div>Loading...</div>; // or return null
+  }
 
   return (
     <div className={`min-h-screen flex relative ${
@@ -291,6 +279,7 @@ if (!currentUser) {
           <div className="max-w-full lg:max-w-4xl mx-auto">
             {activeButton === "upload" && <UploadDoc theme={theme} />}
             {activeButton === "qna" && <QnA theme={theme} />}   
+            {activeButton === "E-Sign" && <ESign theme={theme} />}
             {activeButton === "documents" && (
               <div className="text-center py-8">
                 <FileText size={48} className="mx-auto mb-4 text-gray-400" />
