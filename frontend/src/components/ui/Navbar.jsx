@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Moon, Sun, Menu, X } from 'lucide-react';
 // Import your AuthPage component
 import AuthPage from './Authpage';
-import aiLogo from "../../assets/homepage/logoo.jpg";
+import aiLogo from "../../assets/homepage/logo.png";
 
 const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -13,7 +13,7 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
     { name: 'Home', href: '#home' },
     { name: 'Features', href: '#features' },
     { name: 'How It Works', href: '#how-it-works' },
-    { name: 'About Us', href: '#about' },
+    
   ];
 
   const handleNavClick = (href) => {
@@ -79,9 +79,16 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
           <div className="flex justify-between items-center h-16">
             {/* Logo Section */}
             <div className="flex-shrink-0 flex items-center">
+              <div className="ml-2 px-3 py-1 rounded-lg flex items-center justify-center">
+  <img
+    src={aiLogo}
+    alt="AI"
+    className="w-10 h-10 object-contain"
+  />
+</div>
   {/* LawSimplify text */}
   <span
-    className={`ml-3 text-2xl font-semibold ${
+    className={`ml-0 text-2xl font-semibold ${
       theme === 'dark' ? 'text-white' : 'text-[#323949]'
     }`}
   >
@@ -89,13 +96,7 @@ const Navbar = ({ theme, toggleTheme, isAuthenticated }) => {
   </span>
 
   {/* AI logo in rounded rectangle with circular corners */}
-  <div className="ml-2 px-3 py-1 rounded-lg flex items-center justify-center bg-black">
-  <img
-    src={aiLogo}
-    alt="AI"
-    className="w-10 h-10 object-contain"
-  />
-</div>
+  
 
 </div>
 

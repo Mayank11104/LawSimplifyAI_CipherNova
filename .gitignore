@@ -16,3 +16,6 @@ genaihackathon-*.json
 
 *.pdf
 *.pptx
+
+backend/classification-model/model1l/
+backend/model1l/

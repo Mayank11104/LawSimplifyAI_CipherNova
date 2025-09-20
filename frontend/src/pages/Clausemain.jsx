@@ -3,7 +3,7 @@ import {
   Upload,
   MessageSquare,
   FileText,
-  Settings as SettingsIcon,
+  Settings,
   Shield,
   Bell,
   User,
@@ -11,14 +11,18 @@ import {
   Moon,
   ChevronLeft,
   Menu,
+  Edit,
+  Loader2,
+  Brain,
 } from "lucide-react";
-
+import axios from 'axios';
 
 import UploadDoc from "../components/mainpage/upload_Doc";
 import QnA from "../components/mainpage/Q&A";
 import UserSettings from "../components/mainpage/usersettings";
+import ESign from "../components/mainpage/E_sign";
 
-const Clausemain = ( {theme , toggleTheme, currentUser}) => {
+const Clausemain = ({ theme, toggleTheme, currentUser }) => {
   
   const [activeButton, setActiveButton] = useState("upload");
   const [profileOpen, setProfileOpen] = useState(false);
@@ -28,16 +32,21 @@ const Clausemain = ( {theme , toggleTheme, currentUser}) => {
   const notifRef = useRef(null);
   const sidebarRef = useRef(null);
 
-  // Mock user data
-  // const currentUser = {
-  //   username: "John Doe",
-  //   email: "john.doe@example.com",
-  //   profile_pic: "https://api.dicebear.com/7.x/avataaars/svg?seed=John"
-  // };
+  // Persistent state for file processing
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [showProcessingSidebar, setShowProcessingSidebar] = useState(false);
+  const [currentProcessingFile, setCurrentProcessingFile] = useState(null);
+  const [processingSteps, setProcessingSteps] = useState([
+    { id: 1, name: "Text Extraction", icon: FileText, status: "pending", description: "Extracting text content from document" },
+    { id: 2, name: "Language Translation", icon: Brain, status: "pending", description: "Translating content if needed" },
+    { id: 3, name: "AI Document Profiling", icon: Shield, status: "pending", description: "Analyzing document structure and content" },
+    { id: 4, name: "Final Report Ready", icon: Upload, status: "pending", description: "Generating final analysis report" }
+  ]);
 
-  // const toggleTheme = () => {
-  //   setTheme(theme === "light" ? "dark" : "light");
-  // };
+  // Check if any files are currently processing
+  const hasActiveProcessing = uploadedFiles.some(file => 
+    file.status.startsWith('Processing') && !file.status.startsWith('Processing: Completed')
+  );
 
   useEffect(() => {
     if (currentUser) {
@@ -62,17 +71,14 @@ const Clausemain = ( {theme , toggleTheme, currentUser}) => {
   const sidebarButtons = [
     { id: "upload", label: "Upload Document", icon: Upload },
     { id: "qna", label: "AI Q&A", icon: MessageSquare },
-    { id: "documents", label: "Documents", icon: FileText },
-    { id: "notification", label: "Notification", icon: Bell },
-    { id: "settings", label: "Settings", icon: SettingsIcon },
+    { id: "E-Sign", label: "E-signature", icon: Edit },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const handleButtonClick = (id) => {
-    // console.log("Clausemain currentUser:", currentUser);
     setActiveButton(id);
   };
 
-  // put this inside your component (above return)
   const handleLogout = async () => {
     try {
       await axios.get(`${import.meta.env.VITE_API_URL}/auth/logout`, {
@@ -87,9 +93,9 @@ const Clausemain = ( {theme , toggleTheme, currentUser}) => {
     }
   };
 
-if (!currentUser) {
-  return <div>Loading...</div>; // or return null
-}
+  if (!currentUser) {
+    return <div>Loading...</div>; // or return null
+  }
 
   return (
     <div className={`min-h-screen flex relative ${
@@ -127,16 +133,41 @@ if (!currentUser) {
           </button>
         </div>
 
+        {/* Processing Status Banner */}
+        {hasActiveProcessing && (
+          <div className={`mx-3 md:mx-4 mt-2 p-3 rounded-lg border-l-4 border-blue-500 cursor-pointer transition-all hover:shadow-md ${
+            theme === "dark" ? "bg-blue-900/20 border-blue-400" : "bg-blue-50 border-blue-500"
+          }`}
+          onClick={() => {
+            setActiveButton("upload");
+            setShowProcessingSidebar(true);
+          }}>
+            <div className="flex items-center space-x-2">
+              <Loader2 size={16} className="text-blue-500 animate-spin" />
+              <div className="flex-1">
+                <p className={`text-sm font-medium ${theme === "dark" ? "text-blue-300" : "text-blue-700"}`}>
+                  Processing Document
+                </p>
+                <p className={`text-xs ${theme === "dark" ? "text-blue-200" : "text-blue-600"}`}>
+                  {currentProcessingFile ? currentProcessingFile.name : 'Document analysis in progress...'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Sidebar Buttons */}
         <div className="flex-1 p-3 md:p-4 space-y-2 overflow-y-auto">
           {sidebarButtons.map((button) => {
             const IconComponent = button.icon;
             const isActive = activeButton === button.id;
+            const hasProcessingIndicator = button.id === "upload" && hasActiveProcessing;
+            
             return (
               <button
                 key={button.id}
                 onClick={() => handleButtonClick(button.id)}
-                className={`w-full flex items-center space-x-3 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all duration-200 text-left text-sm md:text-base
+                className={`w-full flex items-center space-x-3 px-4 md:px-6 py-2.5 md:py-3 rounded-lg transition-all duration-200 text-left text-sm md:text-base relative
                   ${isActive
                     ? `${theme === "dark"
                         ? "bg-blue-900/30 text-blue-400 border-l-4 border-blue-400"
@@ -151,7 +182,17 @@ if (!currentUser) {
                     ? theme === "dark" ? "text-blue-400" : "text-blue-700"
                     : theme === "dark" ? "text-gray-400" : "text-gray-500"
                 }`} />
-                <span className="font-medium">{button.label}</span>
+                <span className="font-medium flex-1">{button.label}</span>
+                {hasProcessingIndicator && (
+                  <div className="flex items-center space-x-1">
+                    <Loader2 size={14} className="text-blue-500 animate-spin" />
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                      theme === "dark" ? "bg-blue-900 text-blue-300" : "bg-blue-100 text-blue-700"
+                    }`}>
+                      {uploadedFiles.filter(f => f.status.startsWith('Processing')).length}
+                    </span>
+                  </div>
+                )}
               </button>
             );
           })}
@@ -192,6 +233,16 @@ if (!currentUser) {
           <Menu size={24} />
         </button>
 
+        {/* Processing Status in Navbar (Mobile) */}
+        {hasActiveProcessing && (
+          <div className="lg:hidden flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/20">
+            <Loader2 size={14} className="text-blue-500 animate-spin" />
+            <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+              Processing {uploadedFiles.filter(f => f.status.startsWith('Processing')).length}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
           {/* Theme Toggle */}
           <button
@@ -213,7 +264,7 @@ if (!currentUser) {
             >
               <Bell size={20} className={`${theme === "dark" ? "text-gray-300" : "text-gray-600"}`} />
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 md:h-5 md:w-5 flex items-center justify-center">
-                3
+                {hasActiveProcessing ? uploadedFiles.filter(f => f.status.startsWith('Processing')).length + 2 : 3}
               </span>
             </button>
 
@@ -222,6 +273,17 @@ if (!currentUser) {
                 ${theme === "dark" ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-200 text-gray-900"}`}>
                 <h3 className="text-base md:text-lg font-semibold mb-3">Notifications</h3>
                 <ul className="space-y-2 text-sm">
+                  {hasActiveProcessing && (
+                    <li className={`p-2 rounded-lg border-l-4 border-blue-500 ${theme === "dark" ? "bg-blue-900/20" : "bg-blue-50"}`}>
+                      <div className="flex items-center space-x-2">
+                        <Loader2 size={14} className="text-blue-500 animate-spin" />
+                        <span className="font-medium">Document Processing</span>
+                      </div>
+                      <p className="text-xs mt-1 opacity-75">
+                        {uploadedFiles.filter(f => f.status.startsWith('Processing')).length} files being analyzed
+                      </p>
+                    </li>
+                  )}
                   <li className={`p-2 rounded-lg ${theme === "dark" ? "hover:bg-gray-700" : "hover:bg-gray-50"}`}>
                     📄 New document uploaded successfully.
                   </li>
@@ -267,7 +329,7 @@ if (!currentUser) {
                       </div>
                     </div>
                     <p className="text-sm">
-                      <span className="font-medium">Documents Demystified:</span> 12
+                      <span className="font-medium">Documents Demystified:</span> {uploadedFiles.filter(f => f.status === 'Completed').length}
                     </p>
                     <button
                       className="mt-4 w-full px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
@@ -289,8 +351,21 @@ if (!currentUser) {
       <div className="flex-1 pt-16 lg:ml-80">
         <div className="pt-4 md:pt-12 p-4 md:p-6 lg:p-8">
           <div className="max-w-full lg:max-w-4xl mx-auto">
-            {activeButton === "upload" && <UploadDoc theme={theme} />}
+            {activeButton === "upload" && (
+              <UploadDoc 
+                theme={theme} 
+                uploadedFiles={uploadedFiles}
+                setUploadedFiles={setUploadedFiles}
+                showProcessingSidebar={showProcessingSidebar}
+                setShowProcessingSidebar={setShowProcessingSidebar}
+                currentProcessingFile={currentProcessingFile}
+                setCurrentProcessingFile={setCurrentProcessingFile}
+                processingSteps={processingSteps}
+                setProcessingSteps={setProcessingSteps}
+              />
+            )}
             {activeButton === "qna" && <QnA theme={theme} />}   
+            {activeButton === "E-Sign" && <ESign theme={theme} />}
             {activeButton === "documents" && (
               <div className="text-center py-8">
                 <FileText size={48} className="mx-auto mb-4 text-gray-400" />
