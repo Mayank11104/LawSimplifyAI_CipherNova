@@ -48,9 +48,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+FRONTEND_URL = settings.FRONTEND_URL
+
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=FRONTEND_URL,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -149,7 +153,7 @@ async def login(email: str, password: str, response: Response):
     if not user_doc or not user_id or not verify_password(password, user_doc.get("password", "")):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = create_app_token(user_id)
-    response.set_cookie("token", token, httponly=True, samesite="strict", secure=True)
+    response.set_cookie("token", token, httponly=True, samesite="lax", secure=True)
     return {"message": "Login successful"}
 
 @app.get("/auth/google/login")
@@ -204,8 +208,8 @@ async def google_callback(request: Request, response: Response):
         user_id = doc_ref.id
 
     app_token = create_app_token(user_id)
-    response = RedirectResponse(url="http://localhost:5173/clausemain")
-    response.set_cookie(key="token", value=app_token, httponly=False, samesite="none", secure=True)
+    response = RedirectResponse(url=settings.REDIRECT_RESPONSE)
+    response.set_cookie(key="token", value=app_token, httponly=True, samesite="lax", secure=True)
     return response
 
 async def get_user_data_firestore(user_id: str):

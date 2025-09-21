@@ -19,10 +19,12 @@ class Settings(BaseSettings):
     ALGORITHM : str
 
     API_Key: Optional[str] = " "
-
+    
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET : str
     REDIRECT_URI : str
+    REDIRECT_RESPONSE : str
+    FRONTEND_URL :str
 
     DEBUG: bool = False
     APP_NAME: str = "Default App Name"
